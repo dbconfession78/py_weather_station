@@ -130,8 +130,8 @@ for the <a href="https://github.com/osisoft/Qi-Samples/tree/master/Extended/Pyth
 
 ##### b. retrieve type defined in (1a) if it exists otherwise add it
     def get_or_create_type(self, namespace_id, sds_type):
-        req_url = "https://historianmain.osipi.com/api/Tenants/{tenant_id}/ Namespaces/{namespace_id}/Types/{type_id}"
-            .format(tenant_id=self.tenantId, namespace_id=namespace_id, type_id=sds_type.Id)
+        req_url = "{}/api/Tenants/{}/Namespaces/{}/Types/{}"
+            .format(self.url, self.tenantId, namespace_id, sds_type.Id)
         
         payload = sds_type.to_json()
         response = requests.post(
@@ -150,10 +150,11 @@ for the <a href="https://github.com/osisoft/Qi-Samples/tree/master/Extended/Pyth
 
 ##### b. update stream defined in (2a) if it exists otherwise add it 
     def create_or_update_stream(self, namespace_id, stream):
-        req_url = "https://historianmain.osipi.com/api/Tenants/{tenant_id}/Namespaces/{namespace_id}/Streams/{stream_id}".format(
-            tenant_id=self.tenantId,
-            namespace_id=namespace_id,
-            stream_id=stream.Id)
+        req_url = "{}/api/Tenants/{}/Namespaces/{}/Streams/{}".format(
+            self.url,
+            self.tenantId,
+            namespace_id,
+            stream.Id)
     
         payload = stream.to_json()
         headers = self.__sds_headers()
@@ -171,20 +172,22 @@ for the <a href="https://github.com/osisoft/Qi-Samples/tree/master/Extended/Pyth
 ### 4. Write event to SDS stream
      def update_value(self, namespace_id, stream_id, value):
         payload = value.to_json()
-        req_url =  "https://historianmain.osipi.com/api/Tenants/{tenant_id}/Namespaces/{namespace_id}/Streams/{stream_id}/Data/UpdateValue".format(
-            tenant_id=self.tenantId,
-            namespace_id=namespace_id,
-            stream_id=stream_id)
+        req_url =  "{}/api/Tenants/{}/Namespaces/{}/Streams/{}/Data/UpdateValue".format(
+            self.url,
+            self.tenantId,
+            namespace_id,
+            stream_id)
             
         requests.put(url=req_url, data=payload headers=self.__sds_headers())
 <br>
 
 ### 5. Validate event written in (4)*
     def get_last_value(self, namespace_id, stream_id, value_class, view_id=""):
-        req_url = "https://historianmain.osipi.com/api/Tenants/{tenant_id}/Namespaces/{namespace_id}/Streams/{stream_id}/Data/GetLastValue".format(
-                tenant_id=self.tenantId,
-                namespace_id=namespace_id,
-                stream_id=stream_id)    
+        req_url = "{}/api/Tenants/{}/Namespaces/{}/Streams/{}/Data/GetLastValue".format(
+                self.url,
+                self.tenantId,
+                namespace_id,
+                stream_id)
         
         response = requests.get(req_url, headers=self.__sds_headers())    
         content = json.loads(response.content)
@@ -197,10 +200,11 @@ if you'd prefer to validate data after all events have been written
 
 ### 6. Delete a stream
     def delete_stream(self, namespace_id, stream_id):
-        req_url = "https://historianmain.osipi.com/api/Tenants/{tenant_id}/Namespaces/{namespace_id}/Streams/{stream_id}".format(
-            tenant_id=self.tenantId,
-            namespace_id=namespace_id,
-            stream_id=stream_id)
+        req_url = "{}/api/Tenants/{}/Namespaces/{}/Streams/{}".format(
+            self.url,
+            self.tenantId,
+            namespace_id,
+            stream_id)
              
         requests.delete(req_url, headers=self.__sds_headers())
 <br>
@@ -209,9 +213,10 @@ if you'd prefer to validate data after all events have been written
 \* A type cannot be deleted if any dependants remain (streams, views etc)
 
     def delete_type(self, namespace_id, type_id):
-        req_url = "https://historianmain.osipi.com/api/Tenants/{tenant_id}/ Namespaces/{namespace_id}/Types/{type_id}".format(
-                    tenant_id=self.tenantId,
-                    namespace_id=namespace_id,
-                    type_id=type_id) 
+        req_url = "{}/api/Tenants/{}/ Namespaces/{}/Types/{}".format(
+                    self.url,
+                    self.tenantId,
+                    namespace_id,
+                    type_id) 
                     
         requests.delete(req_url, headers=self.__sds_headers())

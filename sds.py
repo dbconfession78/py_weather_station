@@ -36,48 +36,41 @@ class SequentialDataStore:
 
     def init_type(self, type_id, prop_names):
         """Prepares a new  SdsType object for value population"""
-        sds_type = self.types.get(type_id)
-        if not sds_type:
-            type_id = type_id.lower().replace(' ', '_')
-            print("---------------------------" +
-                  ("-" * len(type_id) + "--"))
-            print("Creating an SDS Type for '{}'".format(
-                type_id))
-            sds_type = SdsType()
-            sds_type.Id = type_id
-            sds_type.name = type_id
-            sds_type.description = "This is a sample SDS type for storing " \
-                                   "{} events".format(sds_type.name)
+        sds_type = SdsType()
+        sds_type.Id = type_id
+        sds_type.name = type_id
+        sds_type.description = "This is a sample SDS type for storing " \
+                               "{} events".format(sds_type.name)
 
-            # Please refer to the following link for an up-to-date listing of
-            # type codes when assigning a type code to a new SdsType:
-            # osisoft-edge.readthedocs.io/en/latest/Qi_Types.html#sdstypecode
-            sds_type.sds_type_code = 1
-            sds_type.Properties = []
+        # Please refer to the following link for an up-to-date listing of
+        # type codes when assigning a type code to a new SdsType:
+        # osisoft-edge.readthedocs.io/en/latest/Qi_Types.html#sdstypecode
+        sds_type.sds_type_code = 1
+        sds_type.Properties = []
 
-            double_type = SdsType()
-            double_type.Id = 'double_type'
-            double_type.sds_type_code = 14
+        double_type = SdsType()
+        double_type.Id = 'double_type'
+        double_type.sds_type_code = 14
 
-            date_time_type = SdsType()
-            date_time_type.Id = "date_time_type"
-            date_time_type.sds_type_code = 16
+        date_time_type = SdsType()
+        date_time_type.Id = "date_time_type"
+        date_time_type.sds_type_code = 16
 
-            time_prop = SdsTypeProperty()
-            time_prop.Id = 'Time'
-            time_prop.SdsType = date_time_type
-            time_prop.IsKey = True
-            sds_type.Properties.append(time_prop)
+        time_prop = SdsTypeProperty()
+        time_prop.Id = 'Time'
+        time_prop.SdsType = date_time_type
+        time_prop.IsKey = True
+        sds_type.Properties.append(time_prop)
 
-            for prop_name in prop_names:
-                prop = SdsTypeProperty()
-                prop.Id = prop_name
-                prop.Name = prop_name
-                prop.SdsType = double_type
-                sds_type.Properties.append(prop)
+        for prop_name in prop_names:
+            prop = SdsTypeProperty()
+            prop.Id = prop_name
+            prop.Name = prop_name
+            prop.SdsType = double_type
+            sds_type.Properties.append(prop)
 
-            sds_type = self.client.get_or_create_type(self.namespace_id,
-                                                      sds_type)
+        sds_type = self.client.get_or_create_type(self.namespace_id,
+                                                  sds_type)
         if not sds_type:
             self.raise_error("init_type() ERROR: Failed to create type")
         self.types[type_id] = sds_type
@@ -85,15 +78,11 @@ class SequentialDataStore:
 
     def init_stream(self, type_id):
         """Initializes an SdsStream object"""
-        sds_stream = self.streams.get(type_id)
-        if not sds_stream:
-            print("Creating an SDS Stream for '{}'".format(type_id))
-            print("---------------------------" + ("-" * len(type_id) + "--"))
-            sds_stream = SdsStream(stream_id=type_id, name=type_id,
-                                   description="A stream to store {} "
-                                               "events".format(type_id),
-                                   type_id=type_id)
-            self.client.create_or_update_stream(self.namespace_id, sds_stream)
+        sds_stream = SdsStream(stream_id=type_id, name=type_id,
+                               description="A stream to store {} "
+                                           "events".format(type_id),
+                               type_id=type_id)
+        self.client.create_or_update_stream(self.namespace_id, sds_stream)
         if not sds_stream:
             self.raise_error("init_stream() ERROR: Failed to initialize "
                              "stream")
@@ -102,11 +91,38 @@ class SequentialDataStore:
 
     def to_sds(self, device, feed, time_key):
         """Wrapper for SdsClient's 'update_value' method"""
-        print("Writing data from '{}' to SDS".format(device.name))
-        type_id = device.name
+        type_id = device.name.lower()
+        sds_type = self.types.get(type_id)
+        should_setup = False
+        if not sds_type:
+            type_id = type_id.lower().replace(' ', '_')
+            print("Setting up SDS Type and Stream for '{}'".format(type_id))
+            print("---------------------------" +
+                  ("-" * len(type_id) + "--"))
+            print("Creating an SDS Type for '{}'".format(
+                type_id))
+
         if self.init_type(type_id, device.metric_names):
+            sds_stream = self.streams.get(type_id)
+            if not sds_stream:
+                print("Creating an SDS Stream for '{}'".format(type_id))
+                print("---------------------------" + ("-" * len(type_id) + "--"))
+                should_setup = True
+
             stream = self.init_stream(type_id)
+            if should_setup:
+                    print("SDS Setup complete\n")
             metric_dict = feed.construct_metric_dict(-1)
+
+            if (device.last_metrics_written and metric_dict == device.last_metrics_written):
+                print("No new  data for '{}'".format(device.name))
+                self.ws.has_new_data = False
+                return
+            self.ws.has_new_data = True
+            device.last_metrics_written = metric_dict
+            print("-------------------------------" + ("-" * len(device.name)))
+            print("Writing new data from '{}' to SDS".format(device.name))
+            print("-------------------------------" + ("-" * len(device.name)))
             event = self.next_event(type_id, metric_dict, time_key=time_key)
             if not event:
                 self.raise_error("to_sds() ERROR: Failed to create event")

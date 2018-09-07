@@ -12,6 +12,15 @@ class Program:
         ws: contains attributes related to La Crosse View weather station
         sds: contains attributes related to Sequential Data Store (SDS)
         """
+        print("------------------------------------------")
+        print("  _________    .___     __________        ")
+        print(" /   _____/  __| _/_____\______   \___.__.")
+        print(" \_____  \  / __ |/  ___/|     ___<   |  |")
+        print(" /        \/ /_/ |\___ \ |    |    \___  |")
+        print("/_______  /\____ /____  >|____|    / ____|")
+        print("        \/      \/    \/           \/     ")
+        print("------------------------------------------")
+        print()
         self.config = config
         self.ws = WeatherStation(self.config)
         self.sds = SequentialDataStore(self.config, self.ws)
@@ -55,15 +64,18 @@ class Program:
     def gather_data_over_time(self, location, freq, dur):
         """Checks for new data from devices at location param and based on
         frequency and duration parameters"""
+        timer = Timer(dur)
+        timer.start_timer()
         if freq > dur:
             raise Exception("Frequency can't be higher than duration")
         i = dur
-        while i > 0:
-            print("Time remaining: {} seconds".format(i))
+        while timer.is_counting:
+            print("Time remaining: {} seconds".format(timer.duration))
+            self.ws.has_new_data = False
             for dev in location.devices:
                 f = Feed(self.ws.request_feed(dev))
                 if not f.metrics:
-                    print("There is no collected data for '{}'"
+                    print("There is no new data for '{}'"
                           .format(dev.name))
                     continue
                 if not self.start:
@@ -76,6 +88,8 @@ class Program:
                         dev.last_t_stamp = f.most_recent_timestamp
                     else:
                         print("No new {} data".format(dev.get('device_name')))
+            if (not self.ws.has_new_data):
+                print()
             sleep(freq)
             i -= freq
 
@@ -83,7 +97,7 @@ class Program:
 def main():
     """Application's entry point"""
     config = ConfigParser()
-    config.read("./config.ini")
+    config.read("./config_BAK.ini")
     app = Program(config)
     app.run()
 

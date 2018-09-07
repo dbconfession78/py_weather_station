@@ -6,3 +6,4 @@ class Device:
         self.sensor_id = device_dict.get('sensor_id')
         self.metric_names = device_dict.get('sensor_field_names')
         self.last_timestamp_written = None
+        self.last_metrics_written = None

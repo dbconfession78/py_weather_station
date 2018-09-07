@@ -13,3 +13,5 @@ from sds_type_data import SdsTypeData
 from sds_type_property import SdsTypeProperty
 from time import sleep
 from weather_station import WeatherStation
+from  threading import Thread
+from timer import Timer

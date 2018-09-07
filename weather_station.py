@@ -15,6 +15,7 @@ class WeatherStation:
         self.__devices_by_location = {}
         self.__devices = []
         self.init_weather_station()
+        self.has_new_data = False
 
     @property
     def type_names(self):
