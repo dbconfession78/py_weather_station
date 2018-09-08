@@ -97,7 +97,7 @@ class Program:
 def main():
     """Application's entry point"""
     config = ConfigParser()
-    config.read("./config_BAK.ini")
+    config.read("./config.ini")
     app = Program(config)
     app.run()
 
